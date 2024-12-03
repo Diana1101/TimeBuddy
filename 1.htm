@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Органайзер задач</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7fa;
+            color: #444;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        header {
+            background-color: #6c63ff;
+            color: white;
+            width: 100%;
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        main {
+            padding: 20px;
+            max-width: 700px;
+            width: 90%;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+            animation: slideIn 1s ease-out;
+        }
+
+        h1 {
+            color: #6c63ff;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #6c63ff;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #5553d1;
+            transform: scale(1.05);
+        }
+
+        .task input[type="text"],
+        .task input[type="number"],
+        #break-time {
+            padding: 10px;
+            margin: 5px 0;
+            width: 90%;
+            max-width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        #timer {
+            font-size: 3em;
+            color: #333;
+            margin-top: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        #break-message {
+            display: none;
+            text-align: center;
+            background-color: #ffe4b5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        ol {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #timer-animation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background-color: rgba(108, 99, 255, 0.1);
+            animation: pulse 1.5s infinite;
+            z-index: -1;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                width: 150px;
+                height: 150px;
+                opacity: 0.7;
+            }
+            50% {
+                width: 180px;
+                height: 180px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Органайзер задач</h1>
+    </header>
+    <main>
+        <!-- Страница 1: Инструкция -->
+        <div id="instructions">
+            <h1>Добро пожаловать!</h1>
+            <p>Этот сайт поможет вам организовать выполнение ваших заданий. Следуйте инструкциям ниже:</p>
+            <ol>
+                <li>Нажмите кнопку "Начать", чтобы перейти к настройке задач.</li>
+                <li>Добавьте ваши задания и укажите время, необходимое для их выполнения.</li>
+                <li>Установите время перерыва между заданиями.</li>
+                <li>Начните выполнение, следуя таймеру.</li>
+                <li>Вы можете ставить таймер на паузу или изменять оставшееся время.</li>
+                <li>После завершения задания начнется перерыв, который можно пропустить.</li>
+            </ol>
+            <div class="button-group">
+                <button onclick="showPage('setup')">Начать</button>
+            </div>
+        </div>
+
+        <!-- Страница 2: Настройка задач -->
+        <div id="setup" class="hidden">
+            <h1>Настройка задач</h1>
+            <div id="task-container">
+                <div class="task">
+                    <input type="text" placeholder="Введите предмет или задание">
+                    <input type="number" placeholder="Время (мин)">
+                </div>
+            </div>
+            <div class="button-group">
+                <button id="add-task">Добавить задание</button>
+            </div>
+            
+            <div>
+                <label for="break-time">Время перерыва (мин):</label>
+                <input type="number" id="break-time">
+            </div>
+            <div class="button-group">
+                <button onclick="startTimer()">Начать</button>
+            </div>
+        </div>
+
+        <!-- Страница 3: Таймер -->
+        <div id="timer-page" class="hidden">
+            <h1>Таймер</h1>
+            <div id="current-task">Текущая задача: <span id="task-name"></span></div>
+            <div id="timer">
+                <div id="timer-animation"></div>
+                <span id="timer-text">00:00</span>
+            </div>
+            <div class="button-group" id="task-buttons">
+                <button id="pause" onclick="togglePause()">Пауза</button>
+                <button onclick="adjustTime(5)">+5 минут</button>
+                <button onclick="adjustTime(-5)">-5 минут</button>
+                <button onclick="completeTask()">Сделано</button>
+                <button onclick="showPage('setup')">Назад</button>
+            </div>
+            <div id="break-message">
+                <p>Перерыв</p>
+                <p>Следующая задача: <span id="next-task-name"></span></p>
+                <button onclick="skipBreak()">Пропустить перерыв</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let tasks = [];
+        let currentTaskIndex = 0;
+        let timer;
+        let isPaused = false;
+        let breakTime = 0;
+        let currentTime = 0; // Текущее время задачи
+
+        document.getElementById('add-task').addEventListener('click', function() {
+            const taskContainer = document.getElementById('task-container');
+            const newTask = document.createElement('div');
+            newTask.className = 'task';
+            newTask.innerHTML = `
+                <input type="text" placeholder="Введите предмет или задание">
+                <input type="number" placeholder="Время (мин)">
+            `;
+            taskContainer.appendChild(newTask);
+        });
+
+        function showPage(pageId) {
+            document.getElementById('instructions').classList.add('hidden');
+            document.getElementById('setup').classList.add('hidden');
+            document.getElementById('timer-page').classList.add('hidden');
+            document.getElementById(pageId).classList.remove('hidden');
+        }
+
+        function startTimer() {
+            tasks = Array.from(document.querySelectorAll('#task-container .task'))
+                .map(task => ({
+                    name: task.querySelector('input[type=text]').value,
+                    time: parseInt(task.querySelector('input[type=number]').value, 10) * 60
+                }));
+            breakTime = parseInt(document.getElementById('break-time').value, 10) * 60;
+            if (tasks.length > 0) {
+                currentTaskIndex = 0;
+                showPage('timer-page');
+                startTask(currentTaskIndex);
+            } else {
+                alert("Пожалуйста, добавьте хотя бы одно задание.");
+            }
+        }
+
+        function startTask(index) {
+            if (index < tasks.length) {
+                const task = tasks[index];
+                document.getElementById('task-name').textContent = task.name;
+                currentTime = task.time;
+                document.getElementById('task-buttons').style.display = 'block'; // Показываем кнопки задач
+                document.getElementById('break-message').style.display = 'none'; // Скрываем сообщение о перерыве
+                startCountdown(currentTime, () => completeTask());
+            } else {
+                alert("Все задания выполнены!");
+                showPage('setup');
+            }
+        }
+
+        function startCountdown(duration, callback) {
+            let time = duration;
+            updateTimerDisplay(time);
+
+            timer = setInterval(() => {
+                if (!isPaused) {
+                    time--;
+                    currentTime = time; // Обновляем текущее время
+                    updateTimerDisplay(time);
+                    if (time <= 0) {
+                        clearInterval(timer);
+                        callback();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(time) {
+            const minutes = Math.floor(time / 60);
+            const seconds = time % 60;
+            document.getElementById('timer-text').textContent = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pause').textContent = isPaused ? 'Продолжить' : 'Пауза';
+        }
+
+        function adjustTime(amount) {
+            currentTime += amount * 60; // Изменяем текущее время
+            if (currentTime < 0) currentTime = 0;
+            updateTimerDisplay(currentTime);
+            if (timer) {
+                clearInterval(timer);
+                startCountdown(currentTime, () => completeTask());
+            }
+        }
+
+        function completeTask() {
+            clearInterval(timer);
+            if (currentTaskIndex < tasks.length - 1 && breakTime > 0) {
+                showBreak(); // Начать перерыв после завершения задачи, если это не последняя задача
+            } else {
+                currentTaskIndex++;
+                if (currentTaskIndex < tasks.length) {
+                    startTask(currentTaskIndex);
+                } else {
+                    alert("Все задания выполнены!");
+                    showPage('setup');
+                }
+            }
+        }
+
+        function showBreak() {
+            document.getElementById('task-buttons').style.display = 'none'; // Скрываем кнопки задач
+            document.getElementById('break-message').style.display = 'block'; // Показываем сообщение о перерыве
+
+            const nextTaskIndex = currentTaskIndex + 1;
+            if (nextTaskIndex < tasks.length) {
+                document.getElementById('next-task-name').textContent = tasks[nextTaskIndex].name;
+            } else {
+                document.getElementById('next-task-name').textContent = "Все задания выполнены!";
+            }
+            startCountdown(breakTime, () => {
+                document.getElementById('break-message').style.display = 'none';
+                completeTask();
+            });
+        }
+
+        function skipBreak() {
+            clearInterval(timer);
+            document.getElementById('break-message').style.display = 'none';
+            currentTaskIndex++;
+            if (currentTaskIndex < tasks.length) {
+                startTask(currentTaskIndex);
+            } else {
+                showPage('setup');
+            }
+        }
+    </script>
+</body>
+</html>
